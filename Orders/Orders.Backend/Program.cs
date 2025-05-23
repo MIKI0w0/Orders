@@ -1,22 +1,20 @@
-using Orders.Backend.Data;
 using Microsoft.EntityFrameworkCore;
+using Orders.Backend.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Swagger (documentación de la API)
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Registrar DataContext con la cadena de conexión
-builder.Services.AddDbContext<DataContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DockerConnection"))
-);
+// Inyección del DataContext
+builder.Services.AddDbContext<DataContext>(x =>
+    x.UseSqlServer(builder.Configuration.GetConnectionString("DockerConnection")));
 
-// Otros servicios necesarios (como controladores)
-builder.Services.AddControllers();
+builder.Services.AddCors();
 
 var app = builder.Build();
 
-// Middleware para Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -27,4 +25,11 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseCors(x => x
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .SetIsOriginAllowed(origin => true)
+    .AllowCredentials());
+
 app.Run();
